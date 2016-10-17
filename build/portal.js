@@ -72,6 +72,15 @@ var KEYCODES = {
   ESCAPE: 27
 };
 
+// IE < 9
+var preventDefault = function preventDefault(event) {
+  if (event.preventDefault === undefined) {
+    event.returnValue = false; // eslint-disable-line no-param-reassign
+  } else {
+    event.preventDefault();
+  }
+};
+
 var Portal = _wrapComponent('Portal')(function (_React$Component) {
   _inherits(Portal, _React$Component);
 
@@ -85,6 +94,8 @@ var Portal = _wrapComponent('Portal')(function (_React$Component) {
     _this.closePortal = _this.closePortal.bind(_this);
     _this.handleOutsideMouseClick = _this.handleOutsideMouseClick.bind(_this);
     _this.handleKeydown = _this.handleKeydown.bind(_this);
+    _this.handleWrapperClick = _this.handleWrapperClick.bind(_this);
+    _this.triggerElementRef = _this.triggerElementRef.bind(_this);
     _this.portal = null;
     _this.node = null;
     return _this;
@@ -98,7 +109,7 @@ var Portal = _wrapComponent('Portal')(function (_React$Component) {
       }
 
       if (this.props.closeOnOutsideClick) {
-        document.addEventListener('mouseup', this.handleOutsideMouseClick);
+        document.addEventListener('click', this.handleOutsideMouseClick);
         document.addEventListener('touchstart', this.handleOutsideMouseClick);
       }
 
@@ -141,7 +152,7 @@ var Portal = _wrapComponent('Portal')(function (_React$Component) {
       }
 
       if (this.props.closeOnOutsideClick) {
-        document.removeEventListener('mouseup', this.handleOutsideMouseClick);
+        document.removeEventListener('click', this.handleOutsideMouseClick);
         document.removeEventListener('touchstart', this.handleOutsideMouseClick);
       }
 
@@ -150,7 +161,7 @@ var Portal = _wrapComponent('Portal')(function (_React$Component) {
   }, {
     key: 'handleWrapperClick',
     value: function handleWrapperClick(e) {
-      e.preventDefault();
+      preventDefault(e);
       e.stopPropagation();
 
       if (this.props.togglesOnClick) {
@@ -242,6 +253,23 @@ var Portal = _wrapComponent('Portal')(function (_React$Component) {
       }
     }
   }, {
+    key: 'triggerElementRef',
+    value: function triggerElementRef(triggerElement) {
+      var domElement = (0, _reactDom.findDOMNode)(triggerElement);
+
+      if (this.triggerElement && this.triggerElement !== domElement) {
+        this.triggerElement.removeEventListener('click', this.handleWrapperClick);
+        this.triggerElement.removeEventListener('touchstart', this.handleWrapperClick);
+      }
+
+      if (domElement && this.triggerElement !== domElement) {
+        domElement.addEventListener('click', this.handleWrapperClick);
+        domElement.addEventListener('touchstart', this.handleWrapperClick);
+      }
+
+      this.triggerElement = domElement;
+    }
+  }, {
     key: 'renderPortal',
     value: function renderPortal(props) {
       if (!this.node) {
@@ -266,7 +294,9 @@ var Portal = _wrapComponent('Portal')(function (_React$Component) {
     key: 'render',
     value: function render() {
       if (this.props.openByClickOn) {
-        return _react3.default.cloneElement(this.props.openByClickOn, { onClick: this.handleWrapperClick });
+        return _react3.default.cloneElement(this.props.openByClickOn, {
+          ref: this.triggerElementRef
+        });
       }
       return null;
     }
