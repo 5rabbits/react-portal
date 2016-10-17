@@ -268,6 +268,10 @@ var Portal = _wrapComponent('Portal')(function (_React$Component) {
       }
 
       this.triggerElement = domElement;
+
+      if (typeof this.props.openByClickOn.ref === 'function') {
+        this.props.openByClickOn.ref(triggerElement);
+      }
     }
   }, {
     key: 'renderPortal',
