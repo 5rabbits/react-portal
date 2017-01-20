@@ -14,14 +14,6 @@ var _reactDom = require('react-dom');
 
 var _reactDom2 = _interopRequireDefault(_reactDom);
 
-var _CSSPropertyOperations = require('react/lib/CSSPropertyOperations');
-
-var _CSSPropertyOperations2 = _interopRequireDefault(_CSSPropertyOperations);
-
-var _shallowCompare = require('react/lib/shallowCompare');
-
-var _shallowCompare2 = _interopRequireDefault(_shallowCompare);
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -56,7 +48,6 @@ var Portal = function (_React$Component) {
     _this.closePortal = _this.closePortal.bind(_this);
     _this.handleOutsideMouseClick = _this.handleOutsideMouseClick.bind(_this);
     _this.handleKeydown = _this.handleKeydown.bind(_this);
-    _this.handleWrapperClick = _this.handleWrapperClick.bind(_this);
     _this.triggerElementRef = _this.triggerElementRef.bind(_this);
     _this.portal = null;
     _this.node = null;
@@ -75,36 +66,31 @@ var Portal = function (_React$Component) {
         document.addEventListener('touchstart', this.handleOutsideMouseClick);
       }
 
-      if (this.props.isOpened) {
+      if (this.props.isOpen) {
         this.openPortal();
       }
     }
   }, {
     key: 'componentWillReceiveProps',
     value: function componentWillReceiveProps(newProps) {
-      // portal's 'is open' state is handled through the prop isOpened
-      if (typeof newProps.isOpened !== 'undefined') {
-        if (newProps.isOpened) {
+      // portal's 'is open' state is handled through the prop isOpen
+      if (typeof newProps.isOpen !== 'undefined') {
+        if (newProps.isOpen) {
           if (this.state.active) {
             this.renderPortal(newProps);
           } else {
             this.openPortal(newProps);
           }
         }
-        if (!newProps.isOpened && this.state.active) {
+        if (!newProps.isOpen && this.state.active) {
           this.closePortal();
         }
       }
 
       // portal handles its own 'is open' state
-      if (typeof newProps.isOpened === 'undefined' && this.state.active) {
+      if (typeof newProps.isOpen === 'undefined' && this.state.active) {
         this.renderPortal(newProps);
       }
-    }
-  }, {
-    key: 'shouldComponentUpdate',
-    value: function shouldComponentUpdate(nextProps, nextState) {
-      return (0, _shallowCompare2.default)(this, nextProps, nextState);
     }
   }, {
     key: 'componentWillUnmount',
@@ -147,8 +133,7 @@ var Portal = function (_React$Component) {
       var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.props;
 
       this.setState({ active: true });
-      this.renderPortal(props);
-      this.props.onOpen(this.node);
+      this.renderPortal(props, true);
     }
   }, {
     key: 'closePortal',
@@ -202,19 +187,6 @@ var Portal = function (_React$Component) {
       }
     }
   }, {
-    key: 'applyClassNameAndStyle',
-    value: function applyClassNameAndStyle(props) {
-      if (props.className) {
-        this.node.className = props.className;
-      }
-      if (props.style) {
-        // React 15.1.0+ requires third parameter in debug mode
-        /* eslint-disable no-underscore-dangle */
-        _CSSPropertyOperations2.default.setValueForStyles(this.node, props.style, this._reactInternalInstance);
-        /* eslint-enable no-underscore-dangle */
-      }
-    }
-  }, {
     key: 'triggerElementRef',
     value: function triggerElementRef(triggerElement) {
       var domElement = (0, _reactDom.findDOMNode)(triggerElement);
@@ -237,15 +209,14 @@ var Portal = function (_React$Component) {
     }
   }, {
     key: 'renderPortal',
-    value: function renderPortal(props) {
+    value: function renderPortal(props, isOpening) {
       if (!this.node) {
         this.node = document.createElement('div');
-        // apply CSS before the node is added to the DOM to avoid needless reflows
-        this.applyClassNameAndStyle(props);
         document.body.appendChild(this.node);
-      } else {
-        // update CSS when new props arrive
-        this.applyClassNameAndStyle(props);
+      }
+
+      if (isOpening) {
+        this.props.onOpen(this.node);
       }
 
       var children = props.children;
@@ -275,13 +246,17 @@ exports.default = Portal;
 
 
 Portal.propTypes = {
-  className: _react2.default.PropTypes.string,
-  style: _react2.default.PropTypes.object,
   children: _react2.default.PropTypes.element.isRequired,
   openByClickOn: _react2.default.PropTypes.element,
   closeOnEsc: _react2.default.PropTypes.bool,
   closeOnOutsideClick: _react2.default.PropTypes.bool,
-  isOpened: _react2.default.PropTypes.bool,
+  isOpen: _react2.default.PropTypes.bool,
+  isOpened: function isOpened(props, propName, componentName) {
+    if (typeof props[propName] !== 'undefined') {
+      return new Error('Prop `' + propName + '` supplied to `' + componentName + '` was renamed to `isOpen`.\n          https://github.com/tajo/react-portal/pull/82.');
+    }
+    return null;
+  },
   onOpen: _react2.default.PropTypes.func,
   onClose: _react2.default.PropTypes.func,
   beforeClose: _react2.default.PropTypes.func,
