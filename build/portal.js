@@ -171,7 +171,7 @@ var Portal = function (_React$Component) {
       }
 
       var root = (0, _reactDom.findDOMNode)(this.portal);
-      if (root.contains(e.target) || e.target === this.triggerElement) {
+      if (root.contains(e.target) || this.triggerElement && (e.target === this.triggerElement || this.triggerElement.contains(e.target))) {
         return;
       }
 
