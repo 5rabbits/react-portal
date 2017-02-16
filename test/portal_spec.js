@@ -1,9 +1,12 @@
+/* eslint-disable react/no-multi-comp */
+
 import jsdom from 'jsdom';
 import Portal from '../lib/portal';
 import assert from 'assert';
 import { spy } from 'sinon';
 import { render, unmountComponentAtNode } from 'react-dom';
 import { mount } from 'enzyme';
+import { triggerMouse } from './helpers';
 
 describe('react-portal', () => {
   let React;
@@ -308,19 +311,102 @@ describe('react-portal', () => {
       assert.equal(document.body.childElementCount, 0);
     });
 
-    it('closeOnOutsideClick', () => {
-      mount(<Portal closeOnOutsideClick isOpen><p>Hi</p></Portal>);
-      assert.equal(document.body.childElementCount, 1);
+    describe('closeOnOutsideClick', () => {
+      it('should close the portal when clicking with any mouse button', () => {
+        const component = mount(<Portal closeOnOutsideClick><p>Hi</p></Portal>);
 
-      // Should not close when outside click isn't a main click
-      const rightClickMouseEvent = new window.MouseEvent('click', { view: window, button: 2 });
-      document.dispatchEvent(rightClickMouseEvent);
-      assert.equal(document.body.childElementCount, 1);
+        for (let i = 0; i <= 4; i++) {
+          component.instance().openPortal();
+          assert.equal(document.body.childElementCount, 1);
+          triggerMouse(document, 'mousedown', i);
+          assert.equal(document.body.childElementCount, 0);
+        }
+      });
 
-      // Should close when outside click is a main click (typically left button click)
-      const leftClickMouseEvent = new window.MouseEvent('click', { view: window, button: 0 });
-      document.dispatchEvent(leftClickMouseEvent);
-      assert.equal(document.body.childElementCount, 0);
+      it('should not close the portal after manually open it on a click event handler', () => {
+        class Test extends React.Component {
+          constructor(props) {
+            super(props);
+
+            this.handleClick = this.handleClick.bind(this);
+            this.portalRef = this.portalRef.bind(this);
+          }
+
+          handleClick() {
+            this.portal.openPortal();
+          }
+
+          portalRef(portal) {
+            this.portal = portal;
+          }
+
+          render() {
+            return (
+              <div onClick={this.handleClick}>
+                <Portal
+                  closeOnOutsideClick
+                  ref={this.portalRef}
+                >
+                  <p>Hi</p>
+                </Portal>
+              </div>
+            );
+          }
+        }
+
+        // Attaches the node to test the document propagation events
+        const div = document.createElement('div');
+        document.body.appendChild(div);
+
+        render(<Test />, div);
+
+        assert.equal(document.body.children.length, 1);
+
+        triggerMouse(div.children[0], 'mousedown');
+        triggerMouse(div.children[0], 'click');
+
+        assert.equal(document.body.children.length, 2);
+      });
+    });
+
+    it('should not close the portal if the clicked element was is own trigger', () => {
+      class Test extends React.Component {
+        constructor(props) {
+          super(props);
+
+          this.triggerRef = this.triggerRef.bind(this);
+        }
+
+        triggerRef(trigger) {
+          this.trigger = trigger;
+        }
+
+        render() {
+          return (
+            <Portal
+              closeOnOutsideClick
+              isOpen
+              openByClickOn={<button ref={this.triggerRef} />}
+              {...this.props}
+            >
+              <p>Hi</p>
+            </Portal>
+          );
+        }
+      }
+
+      const handleClose = spy();
+
+      // Attaches the node to test the document propagation events
+      const div = document.createElement('div');
+      document.body.appendChild(div);
+
+      const instance = render(<Test onClose={handleClose} />, div);
+
+      triggerMouse(instance.trigger, 'mousedown');
+      triggerMouse(instance.trigger, 'click');
+
+      assert(!handleClose.called);
     });
   });
 });

@@ -62,8 +62,8 @@ var Portal = function (_React$Component) {
       }
 
       if (this.props.closeOnOutsideClick) {
-        document.addEventListener('click', this.handleOutsideMouseClick, true);
-        document.addEventListener('touchstart', this.handleOutsideMouseClick, true);
+        document.addEventListener('mousedown', this.handleOutsideMouseClick);
+        document.addEventListener('touchstart', this.handleOutsideMouseClick);
       }
 
       if (this.props.isOpen) {
@@ -100,7 +100,7 @@ var Portal = function (_React$Component) {
       }
 
       if (this.props.closeOnOutsideClick) {
-        document.removeEventListener('click', this.handleOutsideMouseClick);
+        document.removeEventListener('mousedown', this.handleOutsideMouseClick);
         document.removeEventListener('touchstart', this.handleOutsideMouseClick);
       }
 
@@ -171,7 +171,7 @@ var Portal = function (_React$Component) {
       }
 
       var root = (0, _reactDom.findDOMNode)(this.portal);
-      if (root.contains(e.target) || e.button && e.button !== 0 || e.target === this.triggerElement) {
+      if (root.contains(e.target) || e.target === this.triggerElement) {
         return;
       }
 
@@ -188,16 +188,6 @@ var Portal = function (_React$Component) {
     key: 'triggerElementRef',
     value: function triggerElementRef(triggerElement) {
       var domElement = (0, _reactDom.findDOMNode)(triggerElement);
-
-      if (this.triggerElement && this.triggerElement !== domElement) {
-        this.triggerElement.removeEventListener('click', this.handleWrapperClick);
-        this.triggerElement.removeEventListener('touchstart', this.handleWrapperClick);
-      }
-
-      if (domElement && this.triggerElement !== domElement) {
-        domElement.addEventListener('click', this.handleWrapperClick);
-        domElement.addEventListener('touchstart', this.handleWrapperClick);
-      }
 
       this.triggerElement = domElement;
 
@@ -230,6 +220,7 @@ var Portal = function (_React$Component) {
     value: function render() {
       if (this.props.openByClickOn) {
         return _react2.default.cloneElement(this.props.openByClickOn, {
+          onClick: this.handleWrapperClick,
           ref: this.triggerElementRef
         });
       }
